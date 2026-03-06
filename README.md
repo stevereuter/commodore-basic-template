@@ -95,7 +95,7 @@ Assets for creating and exporting characters are in `assets/`:
 The script exports one 8-byte character per BASIC `data` line and writes a file named like:
 
 ```text
-<your-file>_c64_chars.bas
+<your-file>.bas
 ```
 
 ### Integrating Exported Character Data
@@ -103,7 +103,7 @@ The script exports one 8-byte character per BASIC `data` line and writes a file 
 - Include the exported file from `c64/src/data.bas` (typically near the top), for example:
 
 ```basic
-#include "my_tiles_c64_chars.bas"
+#include "my_tiles.bas"
 ```
 
 - You can still paste lines directly if you prefer, but including the exported file keeps data separate and easier to regenerate.
