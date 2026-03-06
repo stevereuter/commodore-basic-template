@@ -1,0 +1,11 @@
+{
+    "name": "munching-millipede",
+    "description": "Project munching-millipede",
+    "toolkit": "basic",
+    "sources": ["src/main.bas"],
+    "build": "release",
+    "definitions": [],
+    "includes": [],
+    "args": [],
+    "compiler": ""
+}
