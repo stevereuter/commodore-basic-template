@@ -11,10 +11,10 @@ poke 1, 51
 
 # Copy main characters from ROM to RAM
 # default characters, both sets
-for i=0 to 1023*8
-    c=peek(53248+i)
-    poke 49152+i, c
-next
+# for i=0 to 1023*8
+#     c=peek(53248+i)
+#     poke 49152+i, c
+# next
 
 # Restore I/O and BASIC
 poke 1, 55
@@ -29,8 +29,9 @@ poke 53272, 48
 # Tell BASIC the screen moved
 poke 648, 204
 
-# add custom characters from data.bas, this is only the first character @
-# for i=49152 to 49152+7
-#     read c
-#     poke i,c
-# next
+# add custom characters from data.bas, this is only the first 64 characters and their reversed versions
+for i=49152 to 49152+63*8
+    read c
+    poke i,c
+    poke i+128*8,255-c
+next
