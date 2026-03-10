@@ -1,38 +1,48 @@
 -- in Aseprite, go to File->Scripts->Open Scripts Folder, add this file to that folder and restart Aseprite.
 -- This will now show in the File->Scripts menu.
--- Then you can select the Tilemap and click the script from the menu to export the characters as data statement in a .bas file.
+-- Then you can select a 128x128 character layer and click the script from the menu
+-- to export the characters as DATA statements in a .bas file.
 
--- This script is for creating character bytes for a standard hi res character set. One character per data statement (256 line)
+-- This script creates character bytes for a standard hi-res character set.
+-- The selected layer must contain a full 16x16 grid of 8x8 characters (256 total).
 local sprite = app.activeSprite
 local layer = app.activeLayer
+local cel = app.activeCel
 
-if not layer or not layer.isTilemap then
-    return app.alert("Please select a Tilemap layer first.")
+if not sprite then
+    return app.alert("Please open a sprite first.")
 end
 
-local tileset = layer.tileset
+if not layer or layer.isTilemap then
+    return app.alert("Please select a regular image layer, not a tilemap.")
+end
+
+if not cel or cel.layer ~= layer then
+    return app.alert("Please select a cel on the character layer first.")
+end
+
+local image = cel.image
+if image.width ~= 128 or image.height ~= 128 then
+    return app.alert("Layer image must be exactly 128x128 pixels (16x16 characters).")
+end
+
 local output = "# C64 Standard Character Data Export from Aseprite\n"
+output = output .. "# Layer: " .. layer.name .. "\n"
 
--- The C64 index we are currently writing (starting at 0)
-local c64Index = 0
+local charsPerRow = 16
+local totalChars = 256
 
--- Start at 1 to skip the system's default empty tile (Tile 0), we actually need this at 32.
-for i = 1, #tileset - 1 do
-    -- We've reached index 32 and it needs to be a space,
-    -- Aseprite ignores empty tiles so it's not included.
-    if c64Index == 32 then
-        output = output .. "data 0,0,0,0,0,0,0,0\n"
-        c64Index = c64Index + 1
-    end
-    
-    local tileImage = tileset:getTile(i)
+for charIndex = 0, totalChars - 1 do
+    local charX = (charIndex % charsPerRow) * 8
+    local charY = math.floor(charIndex / charsPerRow) * 8
+
     output = output .. "data "
-    
+
     for y = 0, 7 do
         local byteValue = 0
         for x = 0, 7 do
-            -- Get pixel and add to byte using C64 bit weights
-            local pixel = tileImage:getPixel(x, y)
+            -- Read pixel and build byte using C64 bit weights.
+            local pixel = image:getPixel(charX + x, charY + y)
             if pixel > 0 then
                 byteValue = byteValue + (2 ^ (7 - x))
             end
@@ -40,11 +50,17 @@ for i = 1, #tileset - 1 do
         output = output .. string.format("%d", byteValue) .. (y < 7 and "," or "")
     end
     output = output .. "\n"
-    c64Index = c64Index + 1
 end
 
 -- Save the file for VS64 BASIC
-local file = io.open(sprite.filename:gsub(".aseprite", ".bas"), "w")
+local safeLayerName = layer.name:gsub("[^%w%-_]", "_")
+local outputPath = sprite.filename:gsub("%.aseprite$", "_" .. safeLayerName .. "_c64_chars.bas")
+local file = io.open(outputPath, "w")
+
+if not file then
+    return app.alert("Unable to write output file:\n" .. outputPath)
+end
+
 file:write(output)
 file:close()
-app.alert("Exported tiles 1 to " .. (#tileset-1) .. " with C64 index 32 successfully!")
+app.alert("Exported 256 characters successfully from layer '" .. layer.name .. "'.\nSaved: " .. outputPath)
