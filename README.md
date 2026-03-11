@@ -6,12 +6,41 @@
 
 # Commodore BASIC Template
 
-Template repository for building Commodore 64 games in BASIC with VS Code + VS64.
+Template repository for building Commodore 64 games in BASIC with VS Code + VS64, plus a matching web template for browser-playable versions on itch.io.
+
+## Personal Quick Start
+
+This section is optimized for starting a new game fast.
+
+### 60-Second Start
+
+1. Copy this template repo and rename it for your new game.
+2. Open `c64/` in VS Code.
+3. Start VS64 for the `c64` project.
+4. Press `F5` to run/debug in VICE.
+5. Open `web/index.html` through a local static server when you want the browser version.
+
+### New Game Checklist
+
+1. Rename project/game strings in your BASIC source and web page metadata.
+2. Update `c64/src/intro.bas`, `c64/src/gameLoad.bas`, and `c64/src/gameLoop.bas` with your game-specific flow.
+3. Add your first playable loop in C64 first, then mirror behavior in `web/scripts`.
+4. Replace placeholder images in `web/images`.
+5. Keep C64 and web state naming aligned (`intro`, `gameLoad`, `gameLoop`, `gameOver`).
+6. When ready for itch.io, zip the contents of `web/` so `index.html` is at zip root.
+
+### Daily Workflow (Short Version)
+
+- Build gameplay and feel in `c64/` first.
+- Mirror logic in `web/` for browser play.
+- Test often in VICE and browser side-by-side.
 
 ## What This Template Includes
 
 - A BASIC project layout designed for C64 game development.
 - A starter game loop structure split across focused source files in `c64/src`.
+- A browser template in `web/` for building a JavaScript version of the same game.
+- A layered canvas setup (`background`, `main`, `foreground`) for C64-style rendering separation.
 - Character set setup code that copies the ROM charset to RAM and switches VIC-II to use the RAM charset.
 - An Aseprite character template and export script that generates BASIC `data` statements for custom characters.
 - VS64 workspace configuration for build and VICE launch/debug.
@@ -21,13 +50,15 @@ Template repository for building Commodore 64 games in BASIC with VS Code + VS64
 ```text
 commodore-basic-template/
 |- assets/
-|  |- c64-template.aseprite
+|  |- c64-character-set.aseprite
+|  |- c64-screens.aseprite
+|  |- c64-character-set_Character_Set_Main_c64_chars.bas
 |  \- C64 Standard Character Exporter.lua
 |- c64/
-|  |- .vscode/
-|  |  |- launch.json
-|  |  |- settings.json
-|  |  \- tasks.json
+|  |- build/
+|  |  |- build.ninja
+|  |  \- <game>.prg
+|  |- project-config.json
 |  \- src/
 |     |- characters.bas
 |     |- data.bas
@@ -38,8 +69,34 @@ commodore-basic-template/
 |     |- main.bas
 |     |- subroutines.bas
 |     \- variables.bas
+|- web/
+|  |- index.html
+|  |- style.css
+|  |- images/
+|  \- scripts/
+|     |- asset.mjs
+|     |- dom.mjs
+|     |- draw.mjs
+|     |- index.mjs
+|     \- keyboard.mjs
 \- README.md
 ```
+
+## Dual-Target Workflow (C64 + Web)
+
+Use this repository as a two-target game template:
+
+- `c64/` is the Commodore 64 version (source of truth for mechanics and feel).
+- `web/` is the JavaScript/browser version for publishing playable builds on itch.io.
+
+Recommended approach:
+
+1. Build and tune gameplay in the C64 version first.
+2. Mirror mechanics/screen flow in the web version.
+3. Reuse the same naming and state structure where possible (`intro`, `gameLoad`, `gameLoop`, `gameOver`).
+4. Export a web build for itch.io's `Play in browser` option.
+
+If you are working solo and moving fast: treat C64 gameplay as source of truth, and use the web version as a playable mirror for sharing.
 
 ## VS64 Development Workflow
 
@@ -51,6 +108,56 @@ commodore-basic-template/
     - VICE must be available on your system path.
 
 In short: open `c64`, start VS64 (watcher), edit in `c64/src`, and press `F5` to test.
+
+## Web Development Workflow
+
+The web template is intentionally lightweight:
+
+- No framework required.
+- Native ES modules in `web/scripts`.
+- Layered canvases in `web/index.html` for rendering separation.
+
+### Canvas Layers
+
+`web/index.html` includes three canvases in `#game-area`:
+
+- `#game-background`
+- `#game-main`
+- `#game-foreground`
+
+Use these to mirror classic C64 responsibilities:
+
+- Background: static tiles/screens.
+- Main: gameplay sprites/objects.
+- Foreground: HUD/effects/overlay.
+
+### Run Locally
+
+Serve the `web` folder with any static server. Example:
+
+```bash
+npx serve web
+```
+
+Then open the local URL from your terminal output.
+
+## Publishing Web Build to itch.io
+
+For `Play in browser`, upload a ZIP where `index.html` is at the ZIP root.
+
+1. Create a ZIP from the contents of `web/` (not the repository root).
+2. In itch.io, create/edit your project and choose `HTML` as the kind of project.
+3. Upload the ZIP and enable `This file will be played in the browser`.
+4. Set an appropriate viewport in itch (for example, a 4:3 layout if your game uses that ratio).
+
+If your game appears blank on itch, confirm asset paths are relative and still valid after zipping.
+
+### Quick Publish Checklist
+
+1. Confirm the game runs locally from `web/` using a static server.
+2. Zip only the contents inside `web/`.
+3. Verify `index.html` sits at the zip root.
+4. Upload to itch as HTML and enable browser play.
 
 ## Source File Responsibilities
 
@@ -81,7 +188,7 @@ This means you can start from the standard charset and then overwrite specific c
 
 Assets for creating and exporting characters are in `assets/`:
 
-- `assets/c64-template.aseprite`: Starter file for drawing tile-based C64 characters.
+- `assets/c64-character-set.aseprite`: Starter file for drawing tile-based C64 characters.
 - `assets/C64 Standard Character Exporter.lua`: Aseprite script that exports tiles as BASIC `data` lines.
 
 ### Using the Export Script
