@@ -1,10 +1,10 @@
 -- in Aseprite, go to File->Scripts->Open Scripts Folder, add this file to that folder and restart Aseprite.
 -- This will now show in the File->Scripts menu.
--- Then you can select a 128x128 character layer and click the script from the menu
+-- Then you can select a character layer and click the script from the menu
 -- to export the characters as DATA statements in a .bas file.
 
 -- This script creates character bytes for a standard hi-res character set.
--- The selected layer must contain a full 16x16 grid of 8x8 characters (256 total).
+-- The sprite size must be a grid of 8x8 character cells.
 local sprite = app.activeSprite
 local layer = app.activeLayer
 local cel = app.activeCel
@@ -22,15 +22,20 @@ if not cel or cel.layer ~= layer then
 end
 
 local image = cel.image
-if image.width ~= 128 or image.height ~= 128 then
-    return app.alert("Layer image must be exactly 128x128 pixels (16x16 characters).")
+local celX = cel.position.x
+local celY = cel.position.y
+
+if (sprite.width % 8) ~= 0 or (sprite.height % 8) ~= 0 then
+    return app.alert("Sprite size must be a multiple of 8 in both width and height.")
 end
 
 local output = "# C64 Standard Character Data Export from Aseprite\n"
 output = output .. "# Layer: " .. layer.name .. "\n"
+output = output .. "# Grid: " .. (sprite.width / 8) .. "x" .. (sprite.height / 8) .. " characters\n"
 
-local charsPerRow = 16
-local totalChars = 256
+local charsPerRow = sprite.width / 8
+local charRows = sprite.height / 8
+local totalChars = charsPerRow * charRows
 
 for charIndex = 0, totalChars - 1 do
     local charX = (charIndex % charsPerRow) * 8
@@ -42,7 +47,14 @@ for charIndex = 0, totalChars - 1 do
         local byteValue = 0
         for x = 0, 7 do
             -- Read pixel and build byte using C64 bit weights.
-            local pixel = image:getPixel(charX + x, charY + y)
+            local sampleX = charX + x - celX
+            local sampleY = charY + y - celY
+            local pixel = 0
+
+            if sampleX >= 0 and sampleX < image.width and sampleY >= 0 and sampleY < image.height then
+                pixel = image:getPixel(sampleX, sampleY)
+            end
+
             if pixel > 0 then
                 byteValue = byteValue + (2 ^ (7 - x))
             end
@@ -63,4 +75,4 @@ end
 
 file:write(output)
 file:close()
-app.alert("Exported 256 characters successfully from layer '" .. layer.name .. "'.\nSaved: " .. outputPath)
+app.alert("Exported " .. totalChars .. " characters successfully from layer '" .. layer.name .. "'.\nSaved: " .. outputPath)

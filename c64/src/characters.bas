@@ -2,7 +2,7 @@
 # by default this copies the entire character set, but you could modify it to only copy the characters you need for your game.
 # WARNING: this is slow, so it's best to only copy the characters you need.
 
-
+# NOTE: This section is only needed if you want to copy the characters from ROM to RAM
 # Stop Interrupts
 poke 56334, peek(56334) and 254
 
@@ -19,7 +19,9 @@ poke 1, 51
 # Restore I/O and BASIC
 poke 1, 55
 poke 56334, peek(56334) or 1
+# End of character copying ------------------------>
 
+# NOTE: Start from here if only custom characters are used from data
 # Switch VIC to Bank 3
 poke 56576, peek(56576) and 252
 
