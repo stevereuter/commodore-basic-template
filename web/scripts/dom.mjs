@@ -10,23 +10,43 @@ const controlElements = {
     [Key.QUIT]: document.querySelector("#quit"),
 };
 
-// #region elements
-// eslint-disable-next-line import/prefer-default-export
-export const main = document.querySelector("#game-layer");
-// #endregion
+export const CanvasIds = {
+    Background: "game-background",
+    Foreground: "game-foreground",
+    Main: "game-main",
+};
 
-// #region events
+const canvases = new Map();
+Object.values(CanvasIds).forEach((id) => {
+    canvases.set(id, document.querySelector(`#${id}`));
+});
 // keyboard events
 document.addEventListener("keydown", keyDownHandler);
 document.addEventListener("keyup", keyUpHandler);
+// // touch events for mobile
+// Object.entries(controlElements).forEach(([key, element]) => {
+//     element.addEventListener("touchstart", (e) => {
+//         keyDownHandler({ ...e, key });
+//     });
+//     element.addEventListener("touchend", (e) => {
+//         keyUpHandler({ ...e, key });
+//     });
+// });
 
-// touch events for mobile
-Object.entries(controlElements).forEach(([key, element]) => {
-    element.addEventListener("touchstart", (e) => {
-        keyDownHandler({ ...e, key });
+export function getCanvases() {
+    return {
+        [CanvasIds.Background]: canvases.get(CanvasIds.Background),
+        [CanvasIds.Foreground]: canvases.get(CanvasIds.Foreground),
+        [CanvasIds.Main]: canvases.get(CanvasIds.Main),
+    };
+}
+
+export function waitForClickAsync() {
+    return new Promise((resolve) => {
+        const handleClick = () => {
+            document.removeEventListener("click", handleClick);
+            resolve();
+        };
+        document.addEventListener("click", handleClick);
     });
-    element.addEventListener("touchend", (e) => {
-        keyUpHandler({ ...e, key });
-    });
-});
-// #endregion
+}

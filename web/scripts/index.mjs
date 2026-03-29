@@ -1,6 +1,4 @@
-import { getImageAsync } from "./asset.mjs";
-import { drawBackground } from "./draw.mjs";
+// Web Template v###VERSION###
+import { loadGameAsync } from "./game.mjs";
 
-const background = await getImageAsync("loading-screen.png");
-
-drawBackground(background);
+loadGameAsync();

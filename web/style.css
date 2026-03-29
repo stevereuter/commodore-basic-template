@@ -36,3 +36,13 @@ body {
 #game-foreground {
     z-index: 3;
 }
+
+#version-overlay {
+    position: fixed;
+    right: 5px;
+    bottom: 5px;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: monospace;
+    font-size: 10px;
+    pointer-events: none;
+}

@@ -1,5 +1,5 @@
 # This is the main file for the c64 game. It includes all the other files and runs the main loop.
-print "{clr}game title v1.0.0"
+print "{clr}game title v###VERSION###"
 print "by steviesaurus dev"
 print "loading..."
 

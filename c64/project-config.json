@@ -1,6 +1,6 @@
 {
-    "name": "munching-millipede",
-    "description": "Project munching-millipede",
+    "name": "basic-template",
+    "description": "Project basic-template",
     "toolkit": "basic",
     "sources": ["src/main.bas"],
     "build": "release",

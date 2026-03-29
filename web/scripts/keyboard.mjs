@@ -1,6 +1,16 @@
 /** @type {Set<string>} */
 const keys = new Set();
 
+const keyBuffer = [];
+
+export function getDirectionFromBuffer() {
+    return keyBuffer.shift();
+}
+
+export function clearKeyBuffer() {
+    keyBuffer.length = 0;
+}
+
 /** enum {string} */
 export const Key = {
     UP: "w",
@@ -21,12 +31,33 @@ export const Direction = {
     Down: 40,
 };
 
+function addKeyToBuffer(key) {
+    if (keyBuffer.length >= 10) return;
+    switch (key) {
+        case Key.UP:
+            keyBuffer.push(Direction.Up);
+            break;
+        case Key.DOWN:
+            keyBuffer.push(Direction.Down);
+            break;
+        case Key.LEFT:
+            keyBuffer.push(Direction.Left);
+            break;
+        case Key.RIGHT:
+            keyBuffer.push(Direction.Right);
+            break;
+        default:
+            break;
+    }
+}
+
 /**
  * @description handles key down event
  * @param {Event} event key down event
  */
 export function keyDownHandler({ key }) {
     keys.add(key.toLowerCase());
+    addKeyToBuffer(key.toLowerCase());
 }
 
 /**
