@@ -1,27 +1,6 @@
-# This file contains code to copy characters from the ROM to RAM and set up the VIC to use them.
-# by default this copies the entire character set, but you could modify it to only copy the characters you need for your game.
-# WARNING: this is slow, so it's best to only copy the characters you need.
+# This file contains code to add custom characters to the game. It is included in main.bas and run at the start of the game. It also the custom characters data to be referenced in data.bas.
 
-# NOTE: This section is only needed if you want to copy the characters from ROM to RAM
-# Stop Interrupts
-poke 56334, peek(56334) and 254
-
-# Reveal Character ROM (CPU sees ROM at $D000)
-poke 1, 51
-
-# Copy main characters from ROM to RAM
-# default characters, both sets
-# for i=0 to 1023*8
-#     c=peek(53248+i)
-#     poke 49152+i, c
-# next
-
-# Restore I/O and BASIC
-poke 1, 55
-poke 56334, peek(56334) or 1
-# End of character copying ------------------------>
-
-# NOTE: Start from here if only custom characters are used from data
+# Start custom characters writing
 # Switch VIC to Bank 3
 poke 56576, peek(56576) and 252
 
@@ -31,9 +10,9 @@ poke 53272, 48
 # Tell BASIC the screen moved
 poke 648, 204
 
-# add custom characters from data.bas, this is only the first 64 characters and their reversed versions
-for i=49152 to 49152+63*8
+# add custom characters from data.bas
+for i=49152 to 49152+255*8
     read c
     poke i,c
-    poke i+128*8,255-c
 next
+# End of custom character writing

@@ -1,6 +1,7 @@
 # C64 Standard Character Data Export from Aseprite
 # Layer: Character Set Main
-data 60,102,110,110,96,98,60,0
+# Grid: 16.0x16.0 characters
+data 60,126,153,255,189,195,126,60
 data 24,60,102,126,102,102,102,0
 data 124,102,102,124,102,102,124,0
 data 60,102,96,96,96,102,60,0
