@@ -5,6 +5,7 @@ print "loading..."
 
 #include "variables.bas"
 #include "characters.bas"
+#include "sprites.bas"
 
 # TODO: temporary end so that I can view the sprite
 # green background
