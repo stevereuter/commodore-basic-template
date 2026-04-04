@@ -43,6 +43,8 @@ This section is optimized for starting a new game fast.
 - A layered canvas setup (`background`, `main`, `foreground`) for C64-style rendering separation.
 - Character set setup code that copies the ROM charset to RAM and switches VIC-II to use the RAM charset.
 - An Aseprite character template and export script that generates BASIC `data` statements for custom characters.
+- Sprite setup code in `characters.bas` that pokes sprite data into RAM and configures VIC-II sprite registers (position, color, size).
+- An Aseprite sprite template (`c64-sprites.aseprite`) and export script (`C64 24x21 Sprite BASIC DATA Export.lua`) that generates BASIC `data` statements for a 24x21 hi-res sprite.
 - VS64 workspace configuration for build and VICE launch/debug.
 
 ## Project Structure
@@ -51,9 +53,15 @@ This section is optimized for starting a new game fast.
 commodore-basic-template/
 |- assets/
 |  |- c64-character-set.aseprite
+|  |- c64-palette.aseprite
 |  |- c64-screens.aseprite
+|  |- c64-sprites.aseprite
 |  |- c64-character-set_Character_Set_Main_c64_chars.bas
-|  \- C64 Standard Character Exporter.lua
+|  |- c64-sprites_Sprite_0_c64_sprite.bas
+|  |- C64 Standard Character Exporter.lua
+|  |- C64 8x8 Character BASIC DATA Layer Export.lua
+|  |- C64 8x8 Character BASIC DATA Tilemap Export.lua
+|  \- C64 24x21 Sprite BASIC DATA Export.lua
 |- c64/
 |  |- build/
 |  |  |- build.ninja
@@ -163,13 +171,13 @@ If your game appears blank on itch, confirm asset paths are relative and still v
 
 - `c64/src/main.bas`: Entry point; includes all modules and drives load -> loop -> game over -> restart.
 - `c64/src/variables.bas`: Global variables and array setup.
-- `c64/src/characters.bas`: Character memory setup (ROM-to-RAM copy, VIC bank/screen/charset switch).
+- `c64/src/characters.bas`: Character and sprite memory setup (VIC bank/screen/charset switch, custom character poke into RAM, sprite data poke into RAM, VIC-II sprite register setup for position/color/size).
 - `c64/src/intro.bas`: Intro/title screen logic.
 - `c64/src/gameLoad.bas`: Game state initialization.
 - `c64/src/gameLoop.bas`: Main gameplay loop.
 - `c64/src/gameOver.bas`: End-of-game screen/state.
 - `c64/src/subroutines.bas`: Shared helper routines.
-- `c64/src/data.bas`: `data` statements (text, char bytes, sprite data, etc.).
+- `c64/src/data.bas`: `data` statements (text, char bytes, sprite data, etc.). Includes both the custom character set and sprite data files exported from Aseprite.
 
 ## Custom Character Set Setup
 
@@ -216,6 +224,41 @@ The script exports one 8-byte character per BASIC `data` line and writes a file 
 - You can still paste lines directly if you prefer, but including the exported file keeps data separate and easier to regenerate.
 - Read/poke those bytes into your target charset RAM addresses (example loop is already commented in `characters.bas`).
 - Keep `data.bas` included at the end of `main.bas` so all data is available to your program.
+
+## Aseprite Sprite Workflow
+
+Assets for creating and exporting sprites are in `assets/`:
+
+- `assets/c64-sprites.aseprite`: Starter file for drawing C64 sprites. Each sprite is a 24x21 layer.
+- `assets/c64-palette.aseprite`: C64 color palette reference for use in Aseprite.
+- `assets/C64 24x21 Sprite BASIC DATA Export.lua`: Aseprite script that exports one 24x21 hi-res sprite layer as BASIC `data` lines.
+
+### Using the Sprite Export Script
+
+1. In Aseprite, open `File -> Scripts -> Open Scripts Folder`.
+2. Copy `C64 24x21 Sprite BASIC DATA Export.lua` into that scripts folder.
+3. Restart Aseprite.
+4. Open your `.aseprite` sprite file and select the 24x21 layer for the sprite you want to export.
+5. Run the script from `File -> Scripts`.
+
+The script validates that the sprite canvas is exactly 24x21 pixels, then exports 7 `data` lines (3 rows × 3 bytes each) and writes a file named like:
+
+```text
+<your-file>_<LayerName>_c64_sprite.bas
+```
+
+### Integrating Exported Sprite Data
+
+- Include the exported file from `c64/src/data.bas` after the character data:
+
+```basic
+#include "../../assets/c64-sprites_Sprite_0_c64_sprite.bas"
+```
+
+- The sprite setup code in `characters.bas` reads those `data` bytes and pokes them into RAM at `51200` (`$C800`), which sits inside VIC Bank 3 and away from VIC registers.
+- Sprite pointer for sprite 0 lives at screen base + 1016 (`53240`). The pointer value is `(51200 - 49152) / 64 = 32`.
+- Sprite registers used: enable (`53269`), X position (`53248`), Y position (`53249`), MSB X overflow (`53264`), color (`53287`), double-width (`53277`), double-height (`53271`).
+- To add more sprites, repeat the pointer/poke/register pattern for sprite numbers 1–7.
 
 ## Notes
 
