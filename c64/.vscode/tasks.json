@@ -1,13 +1,49 @@
 {
+    "version": "2.0.0",
     "tasks": [
         {
+            "label": "vs64 build prg",
             "type": "vs64",
             "action": "build",
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "label": "create d64 image",
+            "type": "shell",
+            "command": "c1541",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "args": [
+                "-format",
+                "basic-template,00",
+                "d64",
+                "build/basic-template.d64",
+                "-write",
+                "build/basic-template.prg",
+                "basic-template"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "build project",
+            "type": "shell",
+            "command": "echo",
+            "args": [
+                "Build complete"
+            ],
+            "dependsOn": [
+                "vs64 build prg",
+                "create d64 image"
+            ],
+            "dependsOrder": "sequence",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "label": "build project"
+            "problemMatcher": []
         }
     ]
 }
