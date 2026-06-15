@@ -41,8 +41,8 @@ This section is optimized for starting a new game fast.
 - A starter game loop structure split across focused source files in `c64/src`.
 - A browser template in `web/` for building a JavaScript version of the same game.
 - A layered canvas setup (`background`, `main`, `foreground`) for C64-style rendering separation.
-- Character set setup code that copies the ROM charset to RAM and switches VIC-II to use the RAM charset.
-- An Aseprite character template and export script that generates BASIC `data` statements for custom characters.
+- Character set setup code that loads a custom charset binary from disk into RAM and switches VIC-II to use it.
+- An Aseprite character template and export script that generates a raw binary file for the custom character set.
 - Sprite setup code in `characters.bas` that pokes sprite data into RAM and configures VIC-II sprite registers (position, color, size).
 - An Aseprite sprite template (`c64-sprites.aseprite`) and export script (`C64 24x21 Sprite BASIC DATA Export.lua`) that generates BASIC `data` statements for a 24x21 hi-res sprite.
 - VS64 workspace configuration for build and VICE launch/debug.
@@ -51,14 +51,15 @@ This section is optimized for starting a new game fast.
 
 ```text
 commodore-basic-template/
+|- config.json
 |- assets/
 |  |- c64-character-set.aseprite
+|  |- c64-character-set_Character_Set_Alt_c64_chars.bin
 |  |- c64-palette.aseprite
 |  |- c64-screens.aseprite
 |  |- c64-sprites.aseprite
-|  |- c64-character-set_Character_Set_Main_c64_chars.bas
 |  |- c64-sprites_Sprite_0_c64_sprite.bas
-|  |- C64 Standard Character Exporter.lua
+|  |- C64 8x8 Character BASIC Binary Layer Export.lua
 |  |- C64 8x8 Character BASIC DATA Layer Export.lua
 |  |- C64 8x8 Character BASIC DATA Tilemap Export.lua
 |  \- C64 24x21 Sprite BASIC DATA Export.lua
@@ -177,53 +178,60 @@ If your game appears blank on itch, confirm asset paths are relative and still v
 - `c64/src/gameLoop.bas`: Main gameplay loop.
 - `c64/src/gameOver.bas`: End-of-game screen/state.
 - `c64/src/subroutines.bas`: Shared helper routines.
-- `c64/src/data.bas`: `data` statements (text, char bytes, sprite data, etc.). Includes both the custom character set and sprite data files exported from Aseprite.
+- `c64/src/data.bas`: `data` statements (text, sprite data, etc.). Includes sprite data files exported from Aseprite. Character data is no longer stored here — it is loaded from a binary file on disk.
 
 ## Custom Character Set Setup
 
-The template already includes the base plumbing for custom characters in `c64/src/characters.bas`:
+The template loads a custom character set binary from disk at startup in `c64/src/characters.bas`:
 
-- Disables interrupts during copy setup.
-- Exposes character ROM to the CPU.
-- Copies character data from ROM into RAM (`49152` onward).
-- Restores I/O mapping.
-- Switches VIC-II bank/screen/character pointers to use RAM charset.
-- Updates BASIC screen pointer.
+- Checks if the charset is already loaded (peeks `$C000` for a sentinel value) to avoid reloading on restart.
+- Switches the VIC-II to Bank 3 (`$DD00`).
+- Points the VIC-II character source to RAM at `$C000` (`53272 = 48`).
+- Updates the BASIC screen pointer (`648 = 204`).
+- Executes `LOAD "chars",8,1` to load the `chars` binary from disk directly to `$C000`.
 
-This means you can start from the standard charset and then overwrite specific character bytes with your own data.
+The `chars` binary is defined in `config.json` and embedded into the D64 image at build time by `c64/tools/add_config_binaries.py`. The build task (F5) and `package.sh` both run this step automatically.
 
 ## Aseprite Character Workflow
 
 Assets for creating and exporting characters are in `assets/`:
 
 - `assets/c64-character-set.aseprite`: Starter file for drawing tile-based C64 characters.
-- `assets/C64 Standard Character Exporter.lua`: Aseprite script that exports tiles as BASIC `data` lines.
+- `assets/C64 8x8 Character BASIC Binary Layer Export.lua`: Aseprite script that exports a character set layer as a raw binary file.
 
 ### Using the Export Script
 
 1. In Aseprite, open `File -> Scripts -> Open Scripts Folder`.
-2. Copy `C64 Standard Character Exporter.lua` into that scripts folder.
+2. Copy `C64 8x8 Character BASIC Binary Layer Export.lua` into that scripts folder.
 3. Restart Aseprite.
-4. Open your `.aseprite` character file and select the tilemap layer.
+4. Open your `.aseprite` character file and select the character set layer.
 5. Run the script from `File -> Scripts`.
 
-The script exports one 8-byte character per BASIC `data` line and writes a file named like:
+The script exports 8 bytes per character and writes a raw binary file named like:
 
 ```text
-<your-file>.bas
+<your-file>_<LayerName>_c64_chars.bin
 ```
 
 ### Integrating Exported Character Data
 
-- Include the exported file from `c64/src/data.bas` (typically near the top), for example:
+1. Update `config.json` to point to your exported `.bin` file:
 
-```basic
-#include "my_tiles.bas"
+```json
+{
+    "binaries": [
+        {
+            "name": "Custom Characters",
+            "path": "assets/your-file_LayerName_c64_chars.bin",
+            "loadAddress": "00 C0",
+            "discName": "chars"
+        }
+    ]
+}
 ```
 
-- You can still paste lines directly if you prefer, but including the exported file keeps data separate and easier to regenerate.
-- Read/poke those bytes into your target charset RAM addresses (example loop is already commented in `characters.bas`).
-- Keep `data.bas` included at the end of `main.bas` so all data is available to your program.
+2. Press `F5` (or run `package.sh`) to build. The binary is automatically wrapped as a PRG with a `$C000` load address and written into the D64 image as `chars`.
+3. At runtime, `characters.bas` loads it from disk with `LOAD "chars",8,1` and the VIC-II immediately uses the custom charset from RAM.
 
 ## Aseprite Sprite Workflow
 
