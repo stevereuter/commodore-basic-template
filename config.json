@@ -1,4 +1,12 @@
 {
     "name": "Commodore BASIC Template",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "binaries": [
+        {
+            "name": "Custom Characters",
+            "path": "assets/c64-character-set_Character_Set_Main_c64_chars.bin",
+            "loadAddress": "00 C0",
+            "discName": "chars"
+        }
+    ]
 }

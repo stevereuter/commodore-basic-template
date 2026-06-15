@@ -2,12 +2,23 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "build project + d64",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "vs64 build prg",
+                "create d64 image",
+                "add configured binaries"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
             "label": "vs64 build prg",
             "type": "vs64",
             "action": "build",
-            "problemMatcher": [
-                "$msCompile"
-            ]
+            "problemMatcher": ["$msCompile"]
         },
         {
             "label": "create d64 image",
@@ -28,21 +39,10 @@
             "problemMatcher": []
         },
         {
-            "label": "build project",
+            "label": "add configured binaries",
             "type": "shell",
-            "command": "echo",
-            "args": [
-                "Build complete"
-            ],
-            "dependsOn": [
-                "vs64 build prg",
-                "create d64 image"
-            ],
-            "dependsOrder": "sequence",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
+            "command": "python3",
+            "args": ["${workspaceFolder}/tools/add_config_binaries.py"],
             "problemMatcher": []
         }
     ]
